@@ -119,18 +119,22 @@ function generateWithMask(maskPath) {
 
     ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
 
-    // TEMP CANVAS TO SEPARATE FLOWERS & DRESS
+    // TEMP CANVAS
     const temp = document.createElement("canvas");
     const tctx = temp.getContext("2d");
     temp.width = maskImg.width;
     temp.height = maskImg.height;
+
     tctx.drawImage(maskImg, 0, 0);
 
     const data = tctx.getImageData(0, 0, temp.width, temp.height);
+
     const dress = tctx.createImageData(data);
     const flowers = tctx.createImageData(data);
 
-    // SEPARATE PIXELS BY COLOR
+    // ------------------------------------
+    // 1️⃣ Separate dress pixels & floral pixels
+    // ------------------------------------
     for (let i = 0; i < data.data.length; i += 4) {
       const r = data.data[i];
       const g = data.data[i + 1];
@@ -139,19 +143,19 @@ function generateWithMask(maskPath) {
 
       if (a < 10) continue;
 
-      // White = Flower shape
+      // White = flower (shape)
       if (r > 200 && g > 200 && b > 200) {
-        flowers.data[i + 3] = 255; // keep alpha
+        flowers.data[i + 3] = 255;
       }
-      // Dark = Dress silhouette
+      // Dark = dress silhouette
       else {
         dress.data[i + 3] = 255;
       }
     }
 
-    // --------------------------
-    // 1️⃣ DRAW DRESS GRADIENT
-    // --------------------------
+    // ------------------------------------
+    // 2️⃣ Fill the entire dress with gradient
+    // ------------------------------------
     ctx.putImageData(dress, 0, 0);
 
     const grad = ctx.createLinearGradient(0, 0, 0, outputCanvas.height);
@@ -165,15 +169,17 @@ function generateWithMask(maskPath) {
 
     ctx.globalCompositeOperation = "source-over";
 
-    // --------------------------
-    // 2️⃣ COLOR FLORAL SHAPES (WITH PALETTE)
-    // --------------------------
-    let flowerColored = tctx.createImageData(flowers);
+    // ------------------------------------
+    // 3️⃣ Fill flowers with colours (multi-color)
+    // ------------------------------------
+    const flowerColored = tctx.createImageData(flowers);
+
     let colorIndex = 0;
 
     for (let i = 0; i < flowerColored.data.length; i += 4) {
       if (flowers.data[i + 3] > 10) {
         let col = palette[colorIndex % palette.length];
+
         flowerColored.data[i] = col[0];
         flowerColored.data[i + 1] = col[1];
         flowerColored.data[i + 2] = col[2];
@@ -185,6 +191,7 @@ function generateWithMask(maskPath) {
 
     ctx.putImageData(flowerColored, 0, 0);
 
+    // RESET
     ctx.globalCompositeOperation = "source-over";
   };
 }
