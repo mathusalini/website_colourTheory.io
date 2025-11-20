@@ -13,13 +13,13 @@ const ctx = outputCanvas.getContext("2d");
 const DESIGNS = {
   empire: {
     label: "Empire",
-    base: "assets/Empire.png",           // plain outline
-    mask: "assets/colouredEmpire.png"    // transparent pattern image
+    base: "assets/Empire.png",           
+    mask: "assets/colouredEmpire.png"    
   },
   aline: {
     label: "A-line",
     base: "assets/Aline.png",
-    mask: null                           // set later if you have
+    mask: null                           
   },
   ballgown: {
     label: "Ball Gown",
@@ -44,7 +44,6 @@ document.getElementById("themeUpload").addEventListener("change", function (e) {
   previewImg.onload = function () {
     const colorThief = new ColorThief();
     try {
-      // Get 5 main colours
       palette = colorThief.getPalette(previewImg, 5);
       showBatteries(palette);
     } catch (err) {
@@ -100,15 +99,16 @@ document.getElementById("generateBtn").addEventListener("click", () => {
 
   const design = DESIGNS[currentDesignKey];
 
-  // If we have a special coloured mask for this design (like Empire)
   if (design.mask) {
     generateWithMask(design.mask);
   } else {
-    // Simple solid-fill version using base silhouette
     generateSimpleColour(design.base);
   }
 });
 
+// ------------------------------------------------------------------
+//                 NEW ✨ CREATIVE FASHION OUTPUT
+// ------------------------------------------------------------------
 function generateWithMask(maskPath) {
   const maskImg = new Image();
   maskImg.src = maskPath;
@@ -117,27 +117,38 @@ function generateWithMask(maskPath) {
     outputCanvas.width = maskImg.width;
     outputCanvas.height = maskImg.height;
 
-    // Draw the mask image first (transparent PNG)
     ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-    ctx.drawImage(maskImg, 0, 0);
 
-    // Use a gradient made from the palette
-    const grad = ctx.createLinearGradient(0, 0, outputCanvas.width, 0);
+    // ------------------------------------
+    // 1️⃣ CREATE VERTICAL FASHION GRADIENT
+    // ------------------------------------
+    const gradient = ctx.createLinearGradient(0, 0, 0, outputCanvas.height);
+
     palette.forEach((c, i) => {
-      const stop = i / (palette.length - 1 || 1);
-      grad.addColorStop(stop, `rgb(${c[0]}, ${c[1]}, ${c[2]})`);
+      const stop = i / (palette.length - 1);
+      gradient.addColorStop(stop, `rgb(${c[0]}, ${c[1]}, ${c[2]})`);
     });
 
-    // Keep only the parts where the mask has pixels
-    ctx.globalCompositeOperation = "source-in";
-    ctx.fillStyle = grad;
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
 
-    // Reset blend mode
+    // ------------------------------------
+    // 2️⃣ TINT FLORAL PATTERN (soft blend)
+    // ------------------------------------
+    ctx.globalCompositeOperation = "overlay";
+    ctx.drawImage(maskImg, 0, 0);
+
+    // ------------------------------------
+    // 3️⃣ CUT TO DRESS SHAPE
+    // ------------------------------------
+    ctx.globalCompositeOperation = "destination-in";
+    ctx.drawImage(maskImg, 0, 0);
+
     ctx.globalCompositeOperation = "source-over";
   };
 }
 
+// ---------- SIMPLE SOLID COLOUR VERSION ----------
 function generateSimpleColour(basePath) {
   const baseImg = new Image();
   baseImg.src = basePath;
@@ -150,11 +161,9 @@ function generateSimpleColour(basePath) {
 
     ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
 
-    // Fill canvas with main colour
     ctx.fillStyle = `rgb(${main[0]}, ${main[1]}, ${main[2]})`;
     ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
 
-    // Use the silhouette as a mask
     ctx.globalCompositeOperation = "destination-in";
     ctx.drawImage(baseImg, 0, 0);
 
