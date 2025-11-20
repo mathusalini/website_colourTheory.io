@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Frock Designer</title>
+    <title>Clickable Frock Shapes</title>
     <link rel="stylesheet" href="style.css">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
@@ -9,23 +9,35 @@
 
 <body>
 
-<h2>Upload Image → Select a Frock Shape → Auto-Colored Design</h2>
+<h2>Upload Image → Choose Frock Shape → Auto Colouring</h2>
 
 <input type="file" id="imageInput">
 
 <img id="uploadedImage" class="hidden" crossorigin="anonymous">
 
-<h3>Select a shape:</h3>
+<h3>Select a Frock Shape:</h3>
 
 <div class="shape-container">
-    <img src="frock1.png" class="shape" data-shape="1">
-    <img src="frock2.png" class="shape" data-shape="2">
-    <img src="frock3.png" class="shape" data-shape="3">
-    <img src="frock4.png" class="shape" data-shape="4">
+
+    <div class="shape-box" data-shape="1">
+        <img src="frock1.png" class="shape-img">
+    </div>
+
+    <div class="shape-box" data-shape="2">
+        <img src="frock2.png" class="shape-img">
+    </div>
+
+    <div class="shape-box" data-shape="3">
+        <img src="frock3.png" class="shape-img">
+    </div>
+
+    <div class="shape-box" data-shape="4">
+        <img src="frock4.png" class="shape-img">
+    </div>
+
 </div>
 
-<h3>Final output:</h3>
-
+<h3>Generated Output:</h3>
 <div id="frockOutput" class="frock-mask"></div>
 
 <script src="script.js"></script>
