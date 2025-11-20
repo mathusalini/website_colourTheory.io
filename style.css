@@ -1,4 +1,6 @@
-.hidden { display: none; }
+.hidden {
+    display: none;
+}
 
 .shape-container {
     display: flex;
@@ -6,29 +8,33 @@
     margin: 20px 0;
 }
 
-.shape {
-    width: 120px;
-    cursor: pointer;
-    opacity: 0.7;
-    border: 2px solid transparent;
+.shape-box {
+    padding: 5px;
     border-radius: 10px;
+    cursor: pointer;
+    border: 2px solid transparent;
     transition: 0.3s;
 }
 
-.shape:hover {
-    opacity: 1;
+.shape-box:hover {
+    border-color: #999;
 }
 
-.shape.selected {
-    border: 3px solid #ff0077;
-    opacity: 1;
+.shape-box.selected {
+    border-color: #ff0077;
+    background: #ffe6f1;
 }
 
-/* Output frock box */
+.shape-img {
+    width: 120px;
+    pointer-events: none;   /* VERY IMPORTANT */
+}
+
+/* Output frock */
 .frock-mask {
     width: 280px;
     height: 380px;
-    margin-top: 20px;
+    background-size: cover;
 
     mask-size: contain;
     mask-repeat: no-repeat;
