@@ -13,13 +13,13 @@ const ctx = outputCanvas.getContext("2d");
 const DESIGNS = {
   empire: {
     label: "Empire",
-    base: "assets/Empire.png",           
-    mask: "assets/colouredEmpire.png"    
+    base: "assets/Empire.png",
+    mask: "assets/colouredEmpire.png"
   },
   aline: {
     label: "A-line",
     base: "assets/Aline.png",
-    mask: null                           
+    mask: null
   },
   ballgown: {
     label: "Ball Gown",
@@ -55,14 +55,12 @@ document.getElementById("themeUpload").addEventListener("change", function (e) {
 
 function showBatteries(colors) {
   colorBatteries.innerHTML = "";
-  colors.forEach((c, idx) => {
+  colors.forEach((c) => {
     const battery = document.createElement("div");
     battery.className = "battery";
-
     const fill = document.createElement("div");
     fill.className = "battery-level";
     fill.style.backgroundColor = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
-
     battery.appendChild(fill);
     colorBatteries.appendChild(battery);
   });
@@ -98,7 +96,6 @@ document.getElementById("generateBtn").addEventListener("click", () => {
   }
 
   const design = DESIGNS[currentDesignKey];
-
   if (design.mask) {
     generateWithMask(design.mask);
   } else {
@@ -106,9 +103,9 @@ document.getElementById("generateBtn").addEventListener("click", () => {
   }
 });
 
-// ------------------------------------------------------------------
-//                 NEW ✨ CREATIVE FASHION OUTPUT
-// ------------------------------------------------------------------
+// --------------------------------------------------------
+//           🌸 FINAL FULL COLOUR DESIGN ENGINE
+// --------------------------------------------------------
 function generateWithMask(maskPath) {
   const maskImg = new Image();
   maskImg.src = maskPath;
@@ -119,7 +116,7 @@ function generateWithMask(maskPath) {
 
     ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
 
-    // TEMP CANVAS
+    // Temporary canvas to separate layers
     const temp = document.createElement("canvas");
     const tctx = temp.getContext("2d");
     temp.width = maskImg.width;
@@ -128,13 +125,10 @@ function generateWithMask(maskPath) {
     tctx.drawImage(maskImg, 0, 0);
 
     const data = tctx.getImageData(0, 0, temp.width, temp.height);
-
     const dress = tctx.createImageData(data);
     const flowers = tctx.createImageData(data);
 
-    // ------------------------------------
-    // 1️⃣ Separate dress pixels & floral pixels
-    // ------------------------------------
+    // 1️⃣ Separate dress & flower pixels
     for (let i = 0; i < data.data.length; i += 4) {
       const r = data.data[i];
       const g = data.data[i + 1];
@@ -143,7 +137,7 @@ function generateWithMask(maskPath) {
 
       if (a < 10) continue;
 
-      // White = flower (shape)
+      // White = flower pixel
       if (r > 200 && g > 200 && b > 200) {
         flowers.data[i + 3] = 255;
       }
@@ -153,45 +147,46 @@ function generateWithMask(maskPath) {
       }
     }
 
-    // ------------------------------------
-    // 2️⃣ Fill the entire dress with gradient
-    // ------------------------------------
+    // 2️⃣ Fill DRESS with heavy FIRST COLOUR gradient
     ctx.putImageData(dress, 0, 0);
 
     const grad = ctx.createLinearGradient(0, 0, 0, outputCanvas.height);
-    palette.forEach((c, i) => {
-      grad.addColorStop(i / (palette.length - 1), `rgb(${c[0]},${c[1]},${c[2]})`);
-    });
+
+    // Heavy dominant colour
+    grad.addColorStop(0, `rgb(${palette[0][0]},${palette[0][1]},${palette[0][2]})`);
+    grad.addColorStop(0.4, `rgb(${palette[0][0]},${palette[0][1]},${palette[0][2]})`);
+
+    // Middle transition
+    grad.addColorStop(0.7,
+      `rgb(${palette[1][0]},${palette[1][1]},${palette[1][2]})`
+    );
+
+    // Bottom light colour
+    const light = palette[palette.length - 1];
+    grad.addColorStop(1, `rgb(${light[0]},${light[1]},${light[2]})`);
 
     ctx.globalCompositeOperation = "source-in";
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
-
     ctx.globalCompositeOperation = "source-over";
 
-    // ------------------------------------
-    // 3️⃣ Fill flowers with colours (multi-color)
-    // ------------------------------------
+    // 3️⃣ Colour FLORAL shapes (multi-coloured)
     const flowerColored = tctx.createImageData(flowers);
-
     let colorIndex = 0;
 
     for (let i = 0; i < flowerColored.data.length; i += 4) {
       if (flowers.data[i + 3] > 10) {
         let col = palette[colorIndex % palette.length];
-
         flowerColored.data[i] = col[0];
         flowerColored.data[i + 1] = col[1];
         flowerColored.data[i + 2] = col[2];
         flowerColored.data[i + 3] = 255;
-
         colorIndex++;
       }
     }
 
     ctx.putImageData(flowerColored, 0, 0);
 
-    // RESET
     ctx.globalCompositeOperation = "source-over";
   };
 }
