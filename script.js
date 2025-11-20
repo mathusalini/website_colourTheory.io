@@ -119,30 +119,71 @@ function generateWithMask(maskPath) {
 
     ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
 
-    // ------------------------------------
-    // 1️⃣ CREATE VERTICAL FASHION GRADIENT
-    // ------------------------------------
-    const gradient = ctx.createLinearGradient(0, 0, 0, outputCanvas.height);
+    // TEMP CANVAS TO SEPARATE FLOWERS & DRESS
+    const temp = document.createElement("canvas");
+    const tctx = temp.getContext("2d");
+    temp.width = maskImg.width;
+    temp.height = maskImg.height;
+    tctx.drawImage(maskImg, 0, 0);
 
+    const data = tctx.getImageData(0, 0, temp.width, temp.height);
+    const dress = tctx.createImageData(data);
+    const flowers = tctx.createImageData(data);
+
+    // SEPARATE PIXELS BY COLOR
+    for (let i = 0; i < data.data.length; i += 4) {
+      const r = data.data[i];
+      const g = data.data[i + 1];
+      const b = data.data[i + 2];
+      const a = data.data[i + 3];
+
+      if (a < 10) continue;
+
+      // White = Flower shape
+      if (r > 200 && g > 200 && b > 200) {
+        flowers.data[i + 3] = 255; // keep alpha
+      }
+      // Dark = Dress silhouette
+      else {
+        dress.data[i + 3] = 255;
+      }
+    }
+
+    // --------------------------
+    // 1️⃣ DRAW DRESS GRADIENT
+    // --------------------------
+    ctx.putImageData(dress, 0, 0);
+
+    const grad = ctx.createLinearGradient(0, 0, 0, outputCanvas.height);
     palette.forEach((c, i) => {
-      const stop = i / (palette.length - 1);
-      gradient.addColorStop(stop, `rgb(${c[0]}, ${c[1]}, ${c[2]})`);
+      grad.addColorStop(i / (palette.length - 1), `rgb(${c[0]},${c[1]},${c[2]})`);
     });
 
-    ctx.fillStyle = gradient;
+    ctx.globalCompositeOperation = "source-in";
+    ctx.fillStyle = grad;
     ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
 
-    // ------------------------------------
-    // 2️⃣ TINT FLORAL PATTERN (soft blend)
-    // ------------------------------------
-    ctx.globalCompositeOperation = "overlay";
-    ctx.drawImage(maskImg, 0, 0);
+    ctx.globalCompositeOperation = "source-over";
 
-    // ------------------------------------
-    // 3️⃣ CUT TO DRESS SHAPE
-    // ------------------------------------
-    ctx.globalCompositeOperation = "destination-in";
-    ctx.drawImage(maskImg, 0, 0);
+    // --------------------------
+    // 2️⃣ COLOR FLORAL SHAPES (WITH PALETTE)
+    // --------------------------
+    let flowerColored = tctx.createImageData(flowers);
+    let colorIndex = 0;
+
+    for (let i = 0; i < flowerColored.data.length; i += 4) {
+      if (flowers.data[i + 3] > 10) {
+        let col = palette[colorIndex % palette.length];
+        flowerColored.data[i] = col[0];
+        flowerColored.data[i + 1] = col[1];
+        flowerColored.data[i + 2] = col[2];
+        flowerColored.data[i + 3] = 255;
+
+        colorIndex++;
+      }
+    }
+
+    ctx.putImageData(flowerColored, 0, 0);
 
     ctx.globalCompositeOperation = "source-over";
   };
