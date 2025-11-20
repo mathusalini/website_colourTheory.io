@@ -1,79 +1,95 @@
-document.getElementById("imageInput").addEventListener("change", function(event) {
-    let file = event.target.files[0];
+let selectedShape = null;
+let savedPalette = null;
+let savedPercentages = null;
+
+document.querySelectorAll(".shape").forEach(shape => {
+    shape.addEventListener("click", function() {
+
+        document.querySelectorAll(".shape").forEach(s => s.classList.remove("selected"));
+        this.classList.add("selected");
+
+        selectedShape = this.getAttribute("data-shape");
+
+        applyColorsToFrock();
+    });
+});
+
+document.getElementById("imageInput").addEventListener("change", function(e) {
+    let file = e.target.files[0];
     let img = document.getElementById("uploadedImage");
-
     img.src = URL.createObjectURL(file);
-    img.classList.remove("d-none");
 
-    img.onload = function() {
+    img.onload = function () {
         const colorThief = new ColorThief();
-        let colors = colorThief.getPalette(img, 4); // extract 4 colors
+        let palette = colorThief.getPalette(img, 4);
 
-        generateDesigns(colors);
+        savedPalette = palette;
+        calculateColorPercentages(img, palette);
     };
 });
 
+function calculateColorPercentages(img, palette) {
+    let canvas = document.createElement("canvas");
+    let ctx = canvas.getContext("2d");
 
-function generateDesigns(colors) {
-    const row = document.getElementById("designsRow");
-    row.innerHTML = "";
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
 
-    // Plain design
-    row.innerHTML += createPlain(colors[0]);
+    let data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
-    // Floral pattern
-    row.innerHTML += createFloral(colors[1]);
+    let counts = Array(palette.length).fill(0);
+    let totalPixels = data.length / 4;
 
-    // Gradient
-    row.innerHTML += createGradient(colors[0], colors[2]);
+    for (let i = 0; i < data.length; i += 4) {
+        let r = data[i], g = data[i+1], b = data[i+2];
+        let closest = findClosestColor([r, g, b], palette);
+        counts[closest]++;
+    }
 
-    // Dots
-    row.innerHTML += createDots(colors[3]);
+    let percentages = counts.map(c => Math.round((c / totalPixels) * 100));
+
+    savedPercentages = percentages;
+
+    applyColorsToFrock();
 }
 
-function createPlain(color) {
-    return `
-        <div class="col-md-3 text-center">
-            <div class="frock-box" style="background: rgb(${color});"></div>
-            <p>Plain Design</p>
-        </div>
-    `;
+function findClosestColor(pixel, palette) {
+    let closest = 0;
+    let minDist = Infinity;
+
+    palette.forEach((color, i) => {
+        let dist = Math.sqrt(
+            (pixel[0]-color[0])**2 +
+            (pixel[1]-color[1])**2 +
+            (pixel[2]-color[2])**2
+        );
+        if (dist < minDist) { minDist = dist; closest = i; }
+    });
+
+    return closest;
 }
 
-function createFloral(color) {
-    return `
-        <div class="col-md-3 text-center">
-            <div class="frock-box"
-             style="background: repeating-radial-gradient(circle,
-             rgb(${color}) 0, rgb(${color}) 10px,
-             white 10px, white 20px);"></div>
-            <p>Floral Pattern</p>
-        </div>
-    `;
-}
+function applyColorsToFrock() {
+    if (!selectedShape || !savedPalette || !savedPercentages) return;
 
-function createGradient(c1, c2) {
-    return `
-        <div class="col-md-3 text-center">
-            <div class="frock-box"
-             style="background: linear-gradient(45deg, rgb(${c1}), rgb(${c2}));"></div>
-            <p>Gradient Design</p>
-        </div>
-    `;
-}
+    let maskImg = `frock${selectedShape}.png`;
 
-function createDots(color) {
-    return `
-        <div class="col-md-3 text-center">
-            <div class="frock-box"
-             style="
-                background:
-                radial-gradient(rgb(${color}) 10%, transparent 11%),
-                radial-gradient(rgb(${color}) 10%, transparent 11%);
-                background-size: 30px 30px;
-                background-position: 0 0, 15px 15px;
-             "></div>
-            <p>Dotted Pattern</p>
-        </div>
-    `;
+    let gradient = "linear-gradient(to bottom,";
+    let current = 0;
+
+    for (let i = 0; i < savedPalette.length; i++) {
+        let next = current + savedPercentages[i];
+        gradient += `rgb(${savedPalette[i]}) ${current}% ${next}%,`;
+        current = next;
+    }
+
+    gradient = gradient.slice(0, -1) + ")";
+
+    let output = document.getElementById("frockOutput");
+
+    output.style.background = gradient;
+
+    output.style.maskImage = `url(${maskImg})`;
+    output.style.webkitMaskImage = `url(${maskImg})`;
 }
